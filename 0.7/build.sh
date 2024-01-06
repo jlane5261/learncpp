@@ -1,1 +1,1 @@
-g++ -o HelloWorld main.cpp
+g++ -Wall -o HelloWorld main.cpp
