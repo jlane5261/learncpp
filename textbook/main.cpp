@@ -30,6 +30,7 @@ void types() {
 }
 
 bool accept_example() {
+    // Interesting question here: why does the answer not reset and cin wait for input if more than one character is returned?
     int tries = 1;
     while (tries < 4) {
         std::cout << "do you want to proceed? ('y' or 'n')\n";
@@ -50,9 +51,25 @@ bool accept_example() {
     return false;
 }
 
+int count_x(char* p, char x) 
+// this function assumes that the char* is a C-style string 
+// and points to a zero-terminated array of Char
+// NOTE: this is different than a std::string
+{
+    if (p==nullptr) return 0;
+    int count = 0;
+    for (; *p!=0; ++p)
+        if (*p==x)
+            ++count;
+    return count;
+}
+
 int main() {
     print_type_sizes();
     arithmetic_operations();
     types();
     accept_example();
+    char a[] = {'h','e','l','l','o','0'};
+    int count = count_x(a,'l');
+    std::cout << count << std::endl;
 }
