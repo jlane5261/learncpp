@@ -107,7 +107,7 @@ A Pointer variable can hold the address of an obhject of the appropriate type:
 * statement 3: do after every iteration of the loop
 
 The following function is an example for loop that will print each element of `v`
-> note: that we don't have to speciy an array bound when we initialze the array with a list.
+> note: that we don't have to specify an array bound when we initialze the array with a list.
 
     void print()
     {
@@ -215,4 +215,40 @@ from the above `read_and_sum` function, use `.` (dot) to access `struct` members
     }
 
 #### Classes
+
+A tight connection between the representation of data and the operations on that data is needed for a user-defined type to have all the properties expected of a "real type". We have to distinguish between the interface to a type (to be used by all else), and its implementation (which has access to otherwise inaccessible data). The language mechanism for this is called a `class`.
+
+Classes have members:
+
+1. data members
+2. function members
+3. type members
+
+The interface to a class is defined by the public members of a class, so that the private members are only accessible through that interface
+
+lets revisit the `Vector` example from the struct section:
+
+    class Vector {
+        public:
+            Vector(int s) : elem{new double[s]}, sz{s} {}   // construct a Vector
+            double& operator[](int i) { return elem[i]; }   // element access: subscripting
+            int size() const { return sz; }                 // a "const" suffix means "can be applied to const objects"
+        private:
+            double* elem;   // pointer to the elements
+            int sz;         // the number of elements
+    };
+
+now we can define a variable of our new type with
+
+    Vector v(6);    // a Vector with 6 elements
+
+Here, the representation of a `Vector` (the members `elem` and `sz`) is accessible only through the interface provided by the public members: `Vector()`, `operator[]()`, and `size()`.
+
+**Constructor** -  a constructor is a function with the smae name as its class. It is used to construct objects of a class. It is always immediately called as soon as an object is created from a class. `Vector(int)` defines how objects of type Vector are constructed. It initializes the `Vector` members using a member initializer list:
+
+    : elem{new double[s]}, sz{s}
+
+that is, we initialize `elem` with a pointer to `s` elements of type `double` obtained from the free store. Then, we initialize `sz` to `s`
+
+#### Enumerations
 

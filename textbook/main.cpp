@@ -67,7 +67,7 @@ int count_x(char* p, char x)
 class Vector {
     public:
         Vector(int s) : elem{new double[s]}, sz{s} {}   // construct a Vector
-        double& operator[](int i) { return elem[i]; }   // element access: subscripting
+        double& operator[](int i) { return elem[i]; }   // element access: subscripting (how [] works)
         int size() const { return sz; }                 // a "const" suffix means "can be applied to const objects"
     private:
         double* elem;   // pointer to the elements
@@ -83,7 +83,6 @@ int main() {
     int count = count_x(a,'l');
     std::cout << "number of 'l' chars in string is: " << count << std::endl;
     Vector v(10);
-    {v[3] = 5; v[8] = 3.1415; std::cout << v[2] << std::endl;}
-    {double a = v.operator[](8); std::cout << a << std::endl;}
+    {v[3] = 5; v[3] += 3.1415; std::cout << v[3] << std::endl;}
     {int size = v.size(); std::cout << size << std::endl;}
 }
