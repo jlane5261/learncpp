@@ -64,6 +64,16 @@ int count_x(char* p, char x)
     return count;
 }
 
+class Vector {
+    public:
+        Vector(int s) : elem{new double[s]}, sz{s} {}   // construct a Vector
+        double& operator[](int i) { return elem[i]; }   // element access: subscripting
+        int size() const { return sz; }                 // a "const" suffix means "can be applied to const objects"
+    private:
+        double* elem;   // pointer to the elements
+        int sz;         // the number of elements
+};
+
 int main() {
     print_type_sizes();
     arithmetic_operations();
@@ -71,5 +81,9 @@ int main() {
     accept_example();
     char a[] = {'h','e','l','l','o','0'};
     int count = count_x(a,'l');
-    std::cout << count << std::endl;
+    std::cout << "number of 'l' chars in string is: " << count << std::endl;
+    Vector v(10);
+    {v[3] = 5; v[8] = 3.1415; std::cout << v[2] << std::endl;}
+    {double a = v.operator[](8); std::cout << a << std::endl;}
+    {int size = v.size(); std::cout << size << std::endl;}
 }
