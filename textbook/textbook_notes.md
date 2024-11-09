@@ -252,3 +252,237 @@ that is, we initialize `elem` with a pointer to `s` elements of type `double` ob
 
 #### Enumerations
 
+C++ supportsa simple form of user-defined types for which we can enumerate the values:
+
+    enum class Color { red,blue,green };
+    enum class Traffic_light { green,yellow,red };
+
+    Color col = Color::red;
+    Traffic_light light = Traffic_light::red;
+
+**Enumerations** are used to make code more readable. The `class` after the `enum` specifies that an enumeration is strongly typed and that its enumerators are scoped. Being separate types, `enum class`es help prevent accidental misuses of constants. In particular, we cannot mix `Traffic_light` and `Color` values.
+
+    Color x = red;                  // error: which red?
+    Color y = Traffic_light::red;   // error: that red is not a Color
+    Color z = Color::red;           // ok!
+
+similarly, we cannot implicitly mix `Color` and integer values.
+
+    int i = Color::red;     // error: Color::red is not an int
+    Color c = 2;            // error:: 2 is not a Color
+
+> NOTE: If you don't wnat to explicitly qualify enumerator names and want enumerator values to be `int`s (without the need for an explicit conversion),  you can remove the `class` from `enum class` to get a "plain" `enum`.
+
+ By default, an `enum class` has only assignment, initialization, and comparisons (e.g. `==` and `<`) defined. But because it is a user-defined type, new operators can be defined for it also!
+
+    Traffic_light& operator++(Traffic_light& t)
+        // prefix increment: ++
+    {
+        switch (t) {
+        case Traffic_light::green:  return t=Traffic_light::yellow;
+        case Traffic_light::yellow: return t=Traffic_light::red;
+        case Traffic_light::red:    return t=Traffic_light::green;
+        }
+    }
+
+    Traffic_light next = ++light;       // next becomes Traffic_light::green
+
+
+### Modularity
+
+A C++ program consists of many parts: functions, user-defined types, class hierarchies, and templates. The key to managing this is to clearly define the interactions among those parts. The **first** and **most important** step is to distinguish between the interface to a part and its implementation. At the language level, C++ represents interfaces by declarations. A _declaration_ specifies all that's needed to use a function or a type. For Example:
+
+    double sqrt(double);    // the square root function takes a double and returns a double
+
+    class Vector {
+    public:
+        Vector(int s);
+        double& operator[](int i);
+        int size() const;           // a "const" suffix means "can be applied to const objects";
+    private:
+        double* elem; // elem points to an array of sz doubles
+        int sz;
+    };
+
+The key point here is that the function definitions are "elsewhere". For example, the `sqrt` definition would look like:
+
+    double sqrt(double d)       //definition of sqrt()
+    {
+        // ... algorithm as found in a math textbook
+    }
+
+#### Separate Compilation
+
+C++ supports a notion of separate compilation where user code sees only declarations of the types and functions used. The definitions of those types and functions are in separate source files and compiled separately. This is useful for organizing a program into a set of semi-independent cod fragments. Such separation can be used to minimize compilation times and to strictly enforce separation of logically distinct parts of a program. This in turn minimizes the chance for errors. 
+
+A **library** is often a collection of separately compiled code fragments (e.g. functions)
+
+It is typical to place declarations that specify the interface to a module in a file with a name indicating its intended use. For Example:
+
+    // Vector.h
+
+
+    class Vector {
+    public:
+        Vector(int s);
+        double& operator[](int i);
+        int size() const;           
+    private:
+        double* elem;      // elem points to an array of sz doubles
+        int sz;
+    };
+
+to access this interface: a user will _include_ the header file for example:
+
+    // user.cpp
+
+
+    #include "Vector.h"     // get the Vector Interface
+    #include <cmath>        // get the standard-library math function interface (this includes sqrt())
+    using namespace std;    // make std members visible
+
+    double sqrt_sum(Vector& v)
+    {
+        double sum =0;
+        for (int i=0; i!=v.size(); ++i)
+            sum+=sqrt(v[i]);                // sum of square roots
+        return sum;
+    }
+
+To help ensure consistency the .cpp file providing the implementation of `Vector` will also include the .h file providing its interface:
+
+    // Vector.cpp
+
+
+    #include "Vector.h" // get the inteface
+
+    Vector::Vector(int s)
+        :elem{new double[s]}, sz{s}
+    {
+    }
+
+    double& Vector::operator[](int i)
+    {
+        return elem[i];
+    }
+
+    int Vector::size() const
+    {
+        return sz;
+    }
+
+The code in user.cpp and Vector.cpp shares the Vector interface information presented in Vector.h, but the two files are otherwise independent and can be separately compiled.
+
+
+#### Namespaces
+
+In addition to functions, classes, and enumerations, C++ offers namespaces as a mechanism for expressing that some declarations belong together and that their names shouldn't clash with other names. For example, I might want to experiment with my own complex number type:
+
+    namespace My_code {
+        class complex {/* ... */};
+        complex sqrt(complex);
+        // ...
+        int main();
+    }
+
+    int My_code::main()
+    {
+        complex z{1,2};
+        auto z2 = sqrt(z);
+        std::cout << '{' << z2.real() << '' << z2.imag() << "}\n";
+    }
+
+    int main()
+    {
+        return My_code::main();
+    }
+
+By putting my code into the namespace `My_code`, I make sure that my names do not conflict with the standard-library names in namespace `std`. (the standard library does provide support for `complex` arithmetic.)
+
+#### Error Handling
+
+Error handling is a large and comlex topic with concerns and ramifications that go far beyond language facilities into programming techniques and tools. However C++ provides a few features to help. The major tool is the type system itself. The majority of C++ constructs are dedicated to the design and implementation of elegant and efficient abstractions (e.g., user-defined types and algorithms using them). One effect of this modularity and abstraction (in particular, the use of libraries) is that the point where a run-time error can be detected is separated from the point where it can be handled. **Error Handling** becomes increasingly important as programs grow and especially when libraries are used extensively.
+
+#### Exceptions
+
+Consider the `Vector` example. What should happen when we try to access an element that is out of range for the vector?
+
+
+The solution is for the Vector implementer to detect the attempted out-of-range access and then tell the user about it!
+
+    double& Vector::operator[](int i)
+    {
+        if (i<0 || size()<=i) throw out_of_range{"Vector::operator[]"};
+        return elem[i];
+    }
+
+The `throw` transfers control to a handler for exceptions of type `out_of_range` in some function that directly or indirectly called `Vector::operator[]()`.
+
+We put code for which we are interested in handling exceptions into a `try`-block. the `catch`-clause providing a handler for out_of_range will be entrred. The out of range type is defined in the standard library (in `<stdexcept>`) and is in fact used by some standard-library container access functions.
+
+Proper error handling mechanisms can make error handling simpler, more systematic and more readable!
+
+#### Invariants
+
+Whenever we define a function, we should consider what its preconditions are and if feasible test them. The `[a:b)` notation specifies a half-open range, meaning that `a` is part of the range but `b` is not. `operator[]()` operates on objects of type `Vector` and nothing it does makes any sense unless the members of Vector have "reasonable" values. In particular we did say "`elem` points to an array of `sz` doubles" but it was only stated in a comment.
+
+Such a statementof what is assumed to be true for a class is called an **invariant**
+
+It is the job of a constructor to establish the invariant for its class (so that the member functions can rely on it) and for the member funtions to make sure that the invariant holds when they exit.
+
+Consider this:
+
+    Vector v(-27);
+
+This is likely to cause chaos.
+Here is a more appropriate definition:
+
+    Vector::Vector(int s)
+    {
+        if (s<0) throw length_error{"Vector constructor size"};
+        elem = new double[s];
+        sz = s;
+    }
+
+standard library exception`length_error` is used here to report a non-positive number of elements. If operator new can't find memory to allocate it throws a `std::bad_alloc`. We can now write:
+
+    void test()
+    {
+        try {
+            Vector v(-27);
+        }
+        catch (std::length_error){
+            // handle negative size
+        }
+        catch (std::bad_alloc){
+            // handle memory exhaustion
+        }
+    }
+
+The notion of invariants is central to the design of classes and preconditions serve a similar role in the design of functions.
+
+**Invariants**:
+- help us to understand precisely what we want
+- force us to be specific
+
+The notion of invariants underlies C++'s notions of resource management supported by constructors and destructors.
+
+#### Static Assertions
+
+Exceptions report errors found at run time. If an error can be found at compile time, it is usually preferable to do so. We can perform simple checks on other properties that are known at compile time and report failures as compiler error messages. 
+
+    static_assert(4<=sizeof(int), "integers are too small");    // check integer size
+
+This will write integers are too small if 4<=sizeof(int), that is, if an int on the system does not have at least 4 bytes.
+The `static_assert` mechanism can be used for anything that can be expressed in terms of constant expressions
+
+In general, `static_assert(A,S)` prints `S` as a compiler error message if `A` is not true.
+
+The most important uses of static_asser come when we make assertions about types used sas parameters in generic programming.
+
+## Advice
+1. Don't panic! All will become clear in time.
+2. You don't have to know every detail of C++ to write good programs.
+3. Focus on programming techniques, not on language features; (See Section 2.1)
+
+# CHAPTER 3
