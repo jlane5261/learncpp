@@ -485,4 +485,31 @@ The most important uses of static_asser come when we make assertions about types
 2. You don't have to know every detail of C++ to write good programs.
 3. Focus on programming techniques, not on language features; (See Section 2.1)
 
+
+
 # CHAPTER 3
+
+## Introduction
+
+
+## Classes
+
+
+### Concrete Types
+
+### Abstract Types
+
+### Virtual Functions
+
+### Class Hierarchies
+
+
+## Copy and Move
+
+
+## Templates
+
+
+## Advice
+
+
