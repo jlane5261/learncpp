@@ -490,12 +490,197 @@ The most important uses of static_asser come when we make assertions about types
 # CHAPTER 3
 
 ## Introduction
+This chapter aims to provide an idea of C++'s support for abstraction and resource management (without going into a lot of detail.)
 
 
 ## Classes
+The Central Language feature for C++ is the `Class` - a user defined type provided to represent a concept in the code of a program.
+
+Very often, `classes` are what **libraries** offer!
+
+Essentially, All language features beyond the fundamental types, operators, and statements exist to make classes better, more correct, easier to maintian, more efficient, more elegant, easier to use, easier to read, and easier to reason about.
+
+For this chapter, we'll only consider 3 basic types of classes:
+
+1. Concrete Classes
+2. Abstract Classes
+3. Classes in Class Hierarchies
 
 
 ### Concrete Types
+
+The basic idea of a concrete class is that it behaves "just like built-in types".
+
+a concrete class is a class that can be instantiated, meaning you can create objects from it. Unlike an abstract class, a concrete class has no pure virtual functions, which are functions with `= 0` in their declarations and no implementation. Instead, all member functions in a concrete class are either fully defined or inherited from other fully-defined base classes
+
+#### Arithmetic Types
+
+Arithmetic types are a version of concrete types, the class definition itself contains only the operations requiring access to the representation. Example:
+
+    class complex {
+        double re, im;
+    public:
+        complex(double r, double i) : re{r}, im{i} {}   // construct a complex from two scalars
+        complex(double r) : re{r}, im{0} {}             // construct complex from one scalar
+        complex() : re{0}, im{0} {}                     // default: {0,0}
+
+        double real() const {return re;}                // const indicates that these functions do not modify the object
+        void real(double d) {re=d;}
+        double imag() const {return im;}
+        void imag(double d) {im=d;}
+
+        complex& operator+=(complex z) {re+=z.re; im+=z.im; return *this;}
+        complex& operator-=(complex z) {re-=z.re; im-=z.im; return *this;}
+
+        complex& operator*=(complex);                   // defined out-of-class somewhere
+        complex& operator/=(complex);                   // defined out-of-class somewhere
+    };
+
+This is a simplified version of the standard-library `complex`. The class definition itself contains only the operations requiring access to the representation.
+
+many useful operations do not require direct access to the representation of `complex`, so the can be defined separately from the class definition:
+
+    complex operator+(complex a, complex b) {return a+=b;}
+    complex operator-(complex a, complex b) {return a-=b;}
+    complex operator-(complex a) { return {-a.real(), -a.imag()}; }     //unary minus
+    ...
+    ...
+
+Its important to note here that an argument passed by value is copied, so that the argument can be modified, instead of the caller's copy, thus being able to use the result as the return value.
+
+The definitions of == and != are straightforward.
+
+    bool operator==(complex a, complex b)       //equal
+    {
+        return a.real()==b.real() && a.imag()==b.imag();
+    }
+
+    bool operator!=(complex a, complex b)       // not equal
+    {
+        return !(a==b);
+    }
+
+    // ...
+
+Class `complex` can be used like this:
+
+    void f(complex z)
+    {
+        complex a {2.3};        //construct complex a
+        complex b {1/a};
+        complex c {a+z*complex{1,2.3}};
+        // ...
+
+        if (c!=b)
+            c = -(b/a)+2*b;
+    }
+
+The compiler converts operators involving complex numbers into appropriate function calls. For example, `c!=b` means `operator!=(c,b)`, and `1/a` means `operator/(complex{1},a)`.
+
+NOTE: you cannot change operator syntax for built-in types, i.e. redefining `+` to subtract `int`s.
+
+#### A Container
+
+A _container_ is an object holding a colletion of elements, for example: a `Vector` is a container.
+
+Lets take it back to the example `Vector` Class from Chapter 2. There is one fatal flaw in its design: using `new` to allocate memory for its elements, but it never deallocates! This is not a good idea because although C++ defines an interface for a garbage collector, it is not guaranteed that one is available to make unused memory available for new objects. In some environments you can't use a collector, and sometimes you prefer more precise control of destruction for logical or performance reasons. Therefore, we need a mechanism to ensure that the memory allocated by the constructor is deallocated.
+
+That mechanism is called a `destructor`:
+
+    class Vector {
+        private:
+            double* elem;       // elem points to an array of sz doubles
+            int sz;
+        public:
+            Vector(int s) : elem{new double[s]}, sz{s}      // constructor: acquire resources
+            {
+                for (int i=0; i!=s; ++i) elem[i]=0;         // initialize elements
+            }
+
+            ~Vector() { delete[] elem; }                    // destructor: release resources
+
+            double& operator[](int i);
+            int size() const;
+    };
+
+The name of a destructor is the complement operator, `~`, followed by the name of the class; it is the complement of a constructor. `Vector`'s constructor allocates some memory on the free store (also called the _heap_) using the `new` operator. The destructor cleans up by freeing that memory using the `delete` operator. This is all done without intervention by users of `Vector`. The users simply create and use `Vectors` much as they would variables of built-in types.
+
+For Example:
+
+    void fct(int i)
+    {
+        Vector v(n);
+
+        // ...use v...
+
+        {
+            Vector v2(2*n);
+            // ... use v and v2 ...
+        } // v2 is destroyed here
+
+        // ... use v ...
+
+    } // v is destroyed here
+
+`Vector` obeys the same rules for naming, scope, allocation, lifetime, etc. as does a built-in type, such as `int` and `char`.
+
+For details on how to control the lifetime of an object, see Chapter 6 section 4.2.
+
+The constructor/destructor combination is the basis of many elegant techniques. In particular, it is the basis for most C++ general resource management techniques.
+
+RAII - (_Resource Acquisition Is Initialization_) allows us to eliminate the allocations in general code and keep them buried inside the implementation of well-behaved abstractions. 
+
+#### Initializing Containers
+
+A container exists to hold elements, so we need convenient ways of getting elements into a container. We can handle that by creating a `Vector`  with an appropriate number of elements and then assigning to them, but typically other ways are more elegant.
+
+Here are two of the Author's favorites:
+
+ - _Initializer-list constructor_: Initialize with a list of elements.
+ - `push_back()`: Add a new element at the end (at the back of) the sequence.
+
+These can be declared, like this:
+
+    class Vector {
+    public:
+        Vector(std::initializer_list<double>);      // initialize with a list
+        // ...
+        void push_back(double);                     // add element at end increasing the size by one
+        // ...
+    };
+
+The `push_back()` is useful for input of arbitrary numbers of elements. For example:
+
+    Vector read(istream& is)
+    {
+        Vector v;
+        for (double d; is>>d; )          // read floating-point values into d
+            v.push_back(d);             // add d to v
+        return v;
+    }
+
+The input loop is terminated by an end-of-file or a formatting error. Until that happens, each number read is added to the `Vector` so that at the end, `v`'s size is the number of elements read.
+
+`push_back()`'s implementation is later discussed in Chapter 13 Section 6.4.3
+
+See Chapter 3 Section 3.2 for handling a potentially large amount of data.
+
+The `std::initializer_list` used to define the initializer-list constructor is a standard-library type known to the compiler: when we use a `{}`-list, such as `{1,2,3,4}`, the compiler will create an object of type `initializer_list` to give to the program.
+
+We can then write:
+
+    Vector v1 = {1,2,3,4,5};        // v1 has 5 elements
+    Vector v2 = {1.23,3.45,6.7,8};  // v2 has 4 elements
+
+`Vector`'s initializer-list constructor might be defined like this:
+
+    Vector::Vector(std::initializer_list<double> lst)   // initialize with a list
+        :elem{new double[lst.size()]}, sz{static_cast<int>(lst.size())}
+    {
+        copy(lst.begin(),lst.end(),elem);               // copy from lst into elem
+    }
+
+TODO: comment here on how this constructor works!!!
 
 ### Abstract Types
 
@@ -504,10 +689,27 @@ The most important uses of static_asser come when we make assertions about types
 ### Class Hierarchies
 
 
+
 ## Copy and Move
+
+### Copying Containers
+
+### Moving Containers
+
+### Resource Management
+
+### Suppressing Operations
+
 
 
 ## Templates
+
+### Parameterized Types
+
+### Function Templates
+
+### Function Objects
+
 
 
 ## Advice
