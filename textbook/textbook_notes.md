@@ -93,7 +93,8 @@ this is an array of chars with a length of 6 (v[0]-v[5]) named "v"
 
 this is a pointer to a char, name "p"
 
-A Pointer variable can hold the address of an obhject of the appropriate type:
+A Pointer variable can hold the address of an object of the appropriate type:
+
     char* p = &v[3];    //p points to v's fourth element
     char x = *p;        //*p is the object that p points to
 
@@ -102,6 +103,7 @@ A Pointer variable can hold the address of an obhject of the appropriate type:
     
     for (statement 1; statement 2; statement 3) {}
 
+All of these statements are technically optional.
 * statement 1: do this initially before the loop
 * statement 2: continue loop if true
 * statement 3: do after every iteration of the loop
