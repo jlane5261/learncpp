@@ -699,7 +699,80 @@ First define the interface of a class `Continer` which we will design as a more 
         virtual ~Container() {}
     };
 
+This class is a pure interface to specific containers defined later. The word `virtual` means "may be redefined later in a class derived from this one". The `=0` syntax says the function is _pure virtual_ meaning that a class derived from Container _must_ define the function.
+
+> this is called a **virtual function**!
+
+> A class with a pure virtual function is called an **Abstract Class**
+
+> A class that provides an interface to a variety of other classes is often called a **Polymorphic type**
+
+As is common for **Abstract Classes**, `Container` does not have a constructor! It does have a destructor however, and that destructor is in fact `virtual`. Again, this is common for Abstract Classes because they tend to be __manipulated through references or pointers__! Someone who destroys a `Container` through a pointer has no idea what resources are owned by its implementation.
+
+Use a concrete class (such as `Vector`) to implement the functions required by the interface:
+
+    class Vector_container : public Container {
+        Vector v;
+    public:
+        Vector_container(int s) : v(s) {}
+        ~Vector_container() {}
+
+        double& operator[](int i) {return v[i];}
+        int size() const {return v.size();}
+    };
+
+The class `Vector_container` is _derived_ from class `Container`, the _base_ of `Vector_container`. Alternatively, the subclass(Vector_container) and superclass(Container).
+
+since the derived class inherits members from its base class, it is commonly reffered to as _inheritance_.
+
+consider this function:
+
+    void use(Container& c)
+    {
+        const int sz = c.size();
+
+        for (int i=0; i!=sz; ++i)
+            std::cout << c[i] << '\n';
+    }
+
+For a function like this to use a `Container` in complete ignorance of implementation details, some other function will have to make an object on which it can operate. For example:
+
+    void g()
+    {
+        Vector_container vc(10);    // 10 elements
+        use(vc);
+    }
+
+since `use()` doesn't know about `Vector_containers`, only `Containers`,  it will work just as well for a different implementation of a `Container` such as a `List_container`!
+
+> The main point here is that `use(Container&)` has no idea if its argument is a `Vector_container`, `List_container`, or any other kind of derived `Container`; **It doesn't need to know!**
+
+    void h()
+    {
+        List_container lc = { 1,2,3,4,5,6,7,8,9 };  // List_container has different implementation
+        use(lc);
+    }
+
+Pro: `use()` doesn't need to be recompiled if the implementation of `Vector_container` changes, or a new derived class is created.
+
+Con: objects must be manipulated through pointers or references.
+
+
 ### Virtual Functions
+
+Consider again the use of `Container`:
+
+    void use(Container& c)
+    {
+        const int sz = c.size();
+
+        for (int i=0; i!=sz; ++i)
+            std::cout << c[i] << '\n';
+    }
+
+when `h()` calls `use()`, `List_container`'s operator[] must be used, similarly when `g()` is called, `Vector_container`'s operator[] must be used. A `Container` Object must contain information to allow it to select the right function to call at run time. The usual implementation technique is for the compiler to convert the name of a vertual function into an index into a table of pointers to functions. That table is usually called the _virtual function table_ or simply `vtbl`. Each class with virtual functions has its own vtbl identifying its virtual function. 
+
+The functions in the `vtbl` allow the object to be used correctly even when the size of the object and the layout of its data are unkown to the caller. The implementation of the caller needs only to know the location of the pointer to the `vtbl` in a `Container` and the index used for each virtual function. This virtual call mechanism can be made almost as efficient as the "normal function call" mechanism. Its space overhead is one pointer in each object of a class with virtual functions plus one `vtbl` for each such class.
 
 ### Class Hierarchies
 
