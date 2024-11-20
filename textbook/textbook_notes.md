@@ -686,6 +686,19 @@ TODO: comment here on how this constructor works!!!
 
 ### Abstract Types
 
+Types such as `complex` and `Vector` are called concrete types because their representation is part of their definition. In that they resemble built-in types. 
+
+an **Abstract Type** is a type that completely insulates a user from implementation details. To do that, we decouple the interface from the representation, and give up genuine local variables. Since we don't know anything about the representation of an abstract type (not even its size), we must allocate objects on the free store and access them through references or pointers.
+
+First define the interface of a class `Continer` which we will design as a more abstract version of our `Vector`:
+
+    class Container{
+    public:
+        virtual double& operator[](int) = 0;        // pure virtual function
+        virtual int size() const = 0;               // const member function
+        virtual ~Container() {}
+    };
+
 ### Virtual Functions
 
 ### Class Hierarchies
