@@ -1,6 +1,9 @@
-/*
-Main source file for tic tac toe
-*/
+// --------------------------------------
+// Main source file for TicTacToe
+// 
+// Author: Joshua Lane
+// --------------------------------------
+
 #include <iostream>
 #include "gamecomponents.hpp"
 
