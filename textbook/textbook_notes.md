@@ -60,48 +60,63 @@ The big difference here is when evaluation happens.
 
 For example:
 
-
+```cpp
     const int dmv = 17;
     int var = 17;
     constexpr double max1 = 1.4*square(dmv);  //OK if square(17) is a constant expression
     constexpr double max2 = 1.4*square(var);  //Error: var is not a constant expression
     const double max3 = 1.4*square(var);      //OK, but evaluated at run time
-
+```
 For a function to be usable in a constant expression, it must be defined constexpr.
-
+```cpp
     //REQT: must be rather simple: a return-statement computing a value
     constexpr double square(double x) {return x*x;}
+```
 
 ==TODO== Watch a video explaining const and constexpr, and it's use cases
 
 ### Pointers, Arrays, and Loops
 
 #### Arrays
-[] - means "array of"
+`[]` - means "array of"
 example:
-
+```cpp
     char v[6]
-
+```
 this is an array of chars with a length of 6 (v[0]-v[5]) named "v"
 
 
 #### Pointers
 
 `*` - means "pointer to"
-    
+```cpp
     char* p;
-
+```
 this is a pointer to a char, name "p"
 
 A Pointer variable can hold the address of an object of the appropriate type:
-
+```cpp
     char* p = &v[3];    //p points to v's fourth element
     char x = *p;        //*p is the object that p points to
+```
+
+> ##### From Cherno
+>
+> Example code on pointers:
+> ```cpp
+>     char* buffer = new char[8];
+>     memset(buffer,0,8);
+> ```
+> In this code, `buffer` is a pointer that is set to 8 chars that are allocated on the heap.
+> 
+> `memset` is using the `buffer` pointer to set 8 bytes at `buffer`'s location to `0`.
 
 
 #### For loops and References
-    
+
+```cpp    
     for (statement 1; statement 2; statement 3) {}
+```
 
 All of these statements are technically optional.
 * statement 1: do this initially before the loop
@@ -111,6 +126,7 @@ All of these statements are technically optional.
 The following function is an example for loop that will print each element of `v`
 > note: that we don't have to specify an array bound when we initialze the array with a list.
 
+```cpp
     void print()
     {
         int v[] = {0,1,2,3,4,5,6,7,8,9};
@@ -121,10 +137,12 @@ The following function is an example for loop that will print each element of `v
         for (auto x : {10,21,32,43,54,65})
             cout << x << '\n';
     }
+```
 
 This loop is explicitly copying the values from `v` into the variable `x`.
 If we wanted to improve the performance, we could just have x refer to an element.
 
+```cpp
     void increment()
     {
         int v[] = {0,1,2,3,4,5,6,7,8,9};
@@ -132,7 +150,7 @@ If we wanted to improve the performance, we could just have x refer to an elemen
         for (auto& x : v)
             ++x;
     }
-
+```
 #### pointers and references
 
 | Symbol | Where? | Description | Example |
@@ -150,6 +168,29 @@ A reference is similar to a pointer, except that you don't need to use a prefix 
 its important to ensure that a **pointer** always points to an object, so that dereferencing it is valid.
 When we don't have an object to point to, or if we need to represent the notion of "no object available" (_e.g._ for an end of a list), we give the pointer the value `nullptr` ("the null pointer")
 
+> ##### From Cherno
+> 
+> Example code on references:
+> 
+> ```cpp
+>       void Increment(int* value) // taking a pointer as the function input
+>       {
+>           (*value)++; // dereferencing the pointer so we can increment the value
+>       }
+>       
+>       int main()
+>       {
+>           int a = 5;
+>           Increment(&a); // passes in a reference (memory address) to `a`
+>           std::cout << a << '\n';
+>       }
+> ```
+> An easier way to do this is to re-write the input to take a reference instead of a pointer. you would then
+> call the function like this:
+> ```cpp
+>       Increment(a);
+> ```
+
 ### User Defined Types
 
 C++ Built in types (any type built from fundamental types, the `const` modifier, and declarator operators) are rich, but they are intentionally low level. They directly reflect the capabilities of conventional computer hardware. C++ uses abstraction mechanisms to design and implement their own types.
@@ -160,24 +201,30 @@ C++ Built in types (any type built from fundamental types, the `const` modifier,
 
 The first step in building a new type is often to organize the elements it needs into a data structure, a `struct`
 
+```cpp
     struct Vector {
         int sz;         //number of elements
         double* elem;   //pointer to elements
     };
+```
 
 This first version of Vecto consists of an `int` and a `double*`. A variable of type `Vector` can be defined like this:
 
+``` cpp
     Vector v;
+```
 
->NOTE: by itself, its not much use because v's elem pointer doesn't point to anything.
+> NOTE: by itself, its not much use because `v`'s elem pointer doesn't point to anything.
 
 Lets make `v` useful by giving it some elements.
 
+```cpp
     void vector_init(Vector& v, int s)
     {
         v.elem = new double[s];     // allocate an array of s doubles
         v.sz = s;
     }
+```
 
 `v`'s `elem` member gets a pointer produced by the `new` operator, and `v`'s sz member gets the number of elements. 
 
@@ -187,6 +234,7 @@ The `new` operator allocates memory from an area called _the free store_ AKA _dy
 
 Lets create a simple use case for `Vector`:
 
+```cpp
     double read_and_sum(int s)
         // read s integers from cin and return their sum; s is assumed to be positive
     {
@@ -200,21 +248,24 @@ Lets create a simple use case for `Vector`:
             sum+=v.elem[i];         // take the sum of the elements
         return sum;
     }
+```
 
 This is starting to come together but there is still a long way to go before this `Vector` is as elegant and flexible as the standard-library `vector`
 
 Lets continue to gradually improve `Vector` as an example of language features and techniques.
 
->**PRO TIP**: don't reinvent standard-library components, such as `vector` and `string`, **use them!!**
+> **PRO TIP**: don't reinvent standard-library components, such as `vector` and `string`, **use them!!**
 
 from the above `read_and_sum` function, use `.` (dot) to access `struct` members through a name (and through a reference) and use `->` to access struct members through a pointer. For example:
 
+```cpp
     void f(Vector v, Vector& rv, Vector* pv)
     {
         int i1 = v.sz;      // access through name
         int i2 = rv.sz;     // access through reference
         int i4 = pv->sz;    // access through pointer
     }
+```
 
 #### Classes
 
@@ -230,6 +281,7 @@ The interface to a class is defined by the public members of a class, so that th
 
 lets revisit the `Vector` example from the struct section:
 
+```cpp
     class Vector {
         public:
             Vector(int s) : elem{new double[s]}, sz{s} {}   // construct a Vector
@@ -239,31 +291,39 @@ lets revisit the `Vector` example from the struct section:
             double* elem;   // pointer to the elements
             int sz;         // the number of elements
     };
+```
 
 now we can define a variable of our new type with
 
+```cpp
     Vector v(6);    // a Vector with 6 elements
+```
 
 Here, the representation of a `Vector` (the members `elem` and `sz`) is accessible only through the interface provided by the public members: `Vector()`, `operator[]()`, and `size()`.
 
 **Constructor** -  a constructor is a function with the smae name as its class. It is used to construct objects of a class. It is always immediately called as soon as an object is created from a class. `Vector(int)` defines how objects of type Vector are constructed. It initializes the `Vector` members using a member initializer list:
 
+```cpp
     : elem{new double[s]}, sz{s}
+```
 
 that is, we initialize `elem` with a pointer to `s` elements of type `double` obtained from the free store. Then, we initialize `sz` to `s`
 
 #### Enumerations
 
-C++ supportsa simple form of user-defined types for which we can enumerate the values:
+C++ supports a simple form of user-defined types for which we can enumerate the values:
 
+```cpp
     enum class Color { red,blue,green };
     enum class Traffic_light { green,yellow,red };
 
     Color col = Color::red;
     Traffic_light light = Traffic_light::red;
+```
 
 **Enumerations** are used to make code more readable. The `class` after the `enum` specifies that an enumeration is strongly typed and that its enumerators are scoped. Being separate types, `enum class`es help prevent accidental misuses of constants. In particular, we cannot mix `Traffic_light` and `Color` values.
 
+```cpp
     Color x = red;                  // error: which red?
     Color y = Traffic_light::red;   // error: that red is not a Color
     Color z = Color::red;           // ok!
@@ -272,11 +332,13 @@ similarly, we cannot implicitly mix `Color` and integer values.
 
     int i = Color::red;     // error: Color::red is not an int
     Color c = 2;            // error:: 2 is not a Color
+```
 
 > NOTE: If you don't wnat to explicitly qualify enumerator names and want enumerator values to be `int`s (without the need for an explicit conversion),  you can remove the `class` from `enum class` to get a "plain" `enum`.
 
  By default, an `enum class` has only assignment, initialization, and comparisons (e.g. `==` and `<`) defined. But because it is a user-defined type, new operators can be defined for it also!
 
+```cpp
     Traffic_light& operator++(Traffic_light& t)
         // prefix increment: ++
     {
@@ -288,12 +350,13 @@ similarly, we cannot implicitly mix `Color` and integer values.
     }
 
     Traffic_light next = ++light;       // next becomes Traffic_light::green
-
+```
 
 ### Modularity
 
 A C++ program consists of many parts: functions, user-defined types, class hierarchies, and templates. The key to managing this is to clearly define the interactions among those parts. The **first** and **most important** step is to distinguish between the interface to a part and its implementation. At the language level, C++ represents interfaces by declarations. A _declaration_ specifies all that's needed to use a function or a type. For Example:
 
+```cpp
     double sqrt(double);    // the square root function takes a double and returns a double
 
     class Vector {
@@ -305,13 +368,16 @@ A C++ program consists of many parts: functions, user-defined types, class hiera
         double* elem; // elem points to an array of sz doubles
         int sz;
     };
+```
 
 The key point here is that the function definitions are "elsewhere". For example, the `sqrt` definition would look like:
 
+```cpp
     double sqrt(double d)       //definition of sqrt()
     {
         // ... algorithm as found in a math textbook
     }
+```
 
 #### Separate Compilation
 
@@ -321,6 +387,7 @@ A **library** is often a collection of separately compiled code fragments (e.g. 
 
 It is typical to place declarations that specify the interface to a module in a file with a name indicating its intended use. For Example:
 
+```cpp
     // Vector.h
 
 
@@ -333,9 +400,11 @@ It is typical to place declarations that specify the interface to a module in a 
         double* elem;      // elem points to an array of sz doubles
         int sz;
     };
+```
 
 to access this interface: a user will _include_ the header file for example:
 
+```cpp
     // user.cpp
 
 
@@ -350,9 +419,11 @@ to access this interface: a user will _include_ the header file for example:
             sum+=sqrt(v[i]);                // sum of square roots
         return sum;
     }
+```
 
 To help ensure consistency the .cpp file providing the implementation of `Vector` will also include the .h file providing its interface:
 
+```cpp
     // Vector.cpp
 
 
@@ -372,6 +443,7 @@ To help ensure consistency the .cpp file providing the implementation of `Vector
     {
         return sz;
     }
+```
 
 The code in user.cpp and Vector.cpp shares the Vector interface information presented in Vector.h, but the two files are otherwise independent and can be separately compiled.
 
@@ -380,6 +452,7 @@ The code in user.cpp and Vector.cpp shares the Vector interface information pres
 
 In addition to functions, classes, and enumerations, C++ offers namespaces as a mechanism for expressing that some declarations belong together and that their names shouldn't clash with other names. For example, I might want to experiment with my own complex number type:
 
+```cpp
     namespace My_code {
         class complex {/* ... */};
         complex sqrt(complex);
@@ -398,6 +471,7 @@ In addition to functions, classes, and enumerations, C++ offers namespaces as a 
     {
         return My_code::main();
     }
+```
 
 By putting my code into the namespace `My_code`, I make sure that my names do not conflict with the standard-library names in namespace `std`. (the standard library does provide support for `complex` arithmetic.)
 
@@ -412,11 +486,13 @@ Consider the `Vector` example. What should happen when we try to access an eleme
 
 The solution is for the Vector implementer to detect the attempted out-of-range access and then tell the user about it!
 
+```cpp
     double& Vector::operator[](int i)
     {
         if (i<0 || size()<=i) throw out_of_range{"Vector::operator[]"};
         return elem[i];
     }
+```
 
 The `throw` transfers control to a handler for exceptions of type `out_of_range` in some function that directly or indirectly called `Vector::operator[]()`.
 
@@ -434,20 +510,25 @@ It is the job of a constructor to establish the invariant for its class (so that
 
 Consider this:
 
+```cpp
     Vector v(-27);
+```
 
 This is likely to cause chaos.
 Here is a more appropriate definition:
 
+```cpp
     Vector::Vector(int s)
     {
         if (s<0) throw length_error{"Vector constructor size"};
         elem = new double[s];
         sz = s;
     }
+```
 
 standard library exception`length_error` is used here to report a non-positive number of elements. If operator new can't find memory to allocate it throws a `std::bad_alloc`. We can now write:
 
+```cpp
     void test()
     {
         try {
@@ -460,6 +541,7 @@ standard library exception`length_error` is used here to report a non-positive n
             // handle memory exhaustion
         }
     }
+```
 
 The notion of invariants is central to the design of classes and preconditions serve a similar role in the design of functions.
 
@@ -473,7 +555,9 @@ The notion of invariants underlies C++'s notions of resource management supporte
 
 Exceptions report errors found at run time. If an error can be found at compile time, it is usually preferable to do so. We can perform simple checks on other properties that are known at compile time and report failures as compiler error messages. 
 
+```cpp
     static_assert(4<=sizeof(int), "integers are too small");    // check integer size
+```
 
 This will write integers are too small if 4<=sizeof(int), that is, if an int on the system does not have at least 4 bytes.
 The `static_assert` mechanism can be used for anything that can be expressed in terms of constant expressions
@@ -519,6 +603,7 @@ a concrete class is a class that can be instantiated, meaning you can create obj
 
 Arithmetic types are a version of concrete types, the class definition itself contains only the operations requiring access to the representation. Example:
 
+```cpp
     class complex {
         double re, im;
     public:
@@ -537,21 +622,25 @@ Arithmetic types are a version of concrete types, the class definition itself co
         complex& operator*=(complex);                   // defined out-of-class somewhere
         complex& operator/=(complex);                   // defined out-of-class somewhere
     };
+```
 
 This is a simplified version of the standard-library `complex`. The class definition itself contains only the operations requiring access to the representation.
 
 many useful operations do not require direct access to the representation of `complex`, so the can be defined separately from the class definition:
 
+```cpp
     complex operator+(complex a, complex b) {return a+=b;}
     complex operator-(complex a, complex b) {return a-=b;}
     complex operator-(complex a) { return {-a.real(), -a.imag()}; }     //unary minus
     ...
     ...
+```
 
 Its important to note here that an argument passed by value is copied, so that the argument can be modified, instead of the caller's copy, thus being able to use the result as the return value.
 
 The definitions of == and != are straightforward.
 
+```cpp
     bool operator==(complex a, complex b)       //equal
     {
         return a.real()==b.real() && a.imag()==b.imag();
@@ -563,9 +652,11 @@ The definitions of == and != are straightforward.
     }
 
     // ...
+```
 
 Class `complex` can be used like this:
 
+```cpp
     void f(complex z)
     {
         complex a {2.3};        //construct complex a
@@ -576,6 +667,7 @@ Class `complex` can be used like this:
         if (c!=b)
             c = -(b/a)+2*b;
     }
+```
 
 The compiler converts operators involving complex numbers into appropriate function calls. For example, `c!=b` means `operator!=(c,b)`, and `1/a` means `operator/(complex{1},a)`.
 
@@ -589,6 +681,7 @@ Lets take it back to the example `Vector` Class from Chapter 2. There is one fat
 
 That mechanism is called a `destructor`:
 
+```cpp
     class Vector {
         private:
             double* elem;       // elem points to an array of sz doubles
@@ -604,11 +697,13 @@ That mechanism is called a `destructor`:
             double& operator[](int i);
             int size() const;
     };
+```
 
 The name of a destructor is the complement operator, `~`, followed by the name of the class; it is the complement of a constructor. `Vector`'s constructor allocates some memory on the free store (also called the _heap_) using the `new` operator. The destructor cleans up by freeing that memory using the `delete` operator. This is all done without intervention by users of `Vector`. The users simply create and use `Vectors` much as they would variables of built-in types.
 
 For Example:
 
+```cpp
     void fct(int i)
     {
         Vector v(n);
@@ -623,6 +718,7 @@ For Example:
         // ... use v ...
 
     } // v is destroyed here
+```
 
 `Vector` obeys the same rules for naming, scope, allocation, lifetime, etc. as does a built-in type, such as `int` and `char`.
 
@@ -643,6 +739,7 @@ Here are two of the Author's favorites:
 
 These can be declared, like this:
 
+```cpp
     class Vector {
     public:
         Vector(std::initializer_list<double>);      // initialize with a list
@@ -650,9 +747,11 @@ These can be declared, like this:
         void push_back(double);                     // add element at end increasing the size by one
         // ...
     };
+```
 
 The `push_back()` is useful for input of arbitrary numbers of elements. For example:
 
+```cpp
     Vector read(istream& is)
     {
         Vector v;
@@ -660,6 +759,7 @@ The `push_back()` is useful for input of arbitrary numbers of elements. For exam
             v.push_back(d);             // add d to v
         return v;
     }
+```
 
 The input loop is terminated by an end-of-file or a formatting error. Until that happens, each number read is added to the `Vector` so that at the end, `v`'s size is the number of elements read.
 
@@ -671,16 +771,20 @@ The `std::initializer_list` used to define the initializer-list constructor is a
 
 We can then write:
 
+```cpp
     Vector v1 = {1,2,3,4,5};        // v1 has 5 elements
     Vector v2 = {1.23,3.45,6.7,8};  // v2 has 4 elements
+```
 
 `Vector`'s initializer-list constructor might be defined like this:
 
+```cpp
     Vector::Vector(std::initializer_list<double> lst)   // initialize with a list
         :elem{new double[lst.size()]}, sz{static_cast<int>(lst.size())}
     {
         copy(lst.begin(),lst.end(),elem);               // copy from lst into elem
     }
+```
 
 TODO: comment here on how this constructor works!!!
 
@@ -692,12 +796,14 @@ an **Abstract Type** is a type that completely insulates a user from implementat
 
 First define the interface of a class `Continer` which we will design as a more abstract version of our `Vector`:
 
+```cpp
     class Container{
     public:
         virtual double& operator[](int) = 0;        // pure virtual function
         virtual int size() const = 0;               // const member function
         virtual ~Container() {}
     };
+```
 
 This class is a pure interface to specific containers defined later. The word `virtual` means "may be redefined later in a class derived from this one". The `=0` syntax says the function is _pure virtual_ meaning that a class derived from Container _must_ define the function.
 
@@ -711,6 +817,7 @@ As is common for **Abstract Classes**, `Container` does not have a constructor! 
 
 Use a concrete class (such as `Vector`) to implement the functions required by the interface:
 
+```cpp
     class Vector_container : public Container {
         Vector v;
     public:
@@ -720,13 +827,14 @@ Use a concrete class (such as `Vector`) to implement the functions required by t
         double& operator[](int i) {return v[i];}
         int size() const {return v.size();}
     };
+```
 
 The class `Vector_container` is _derived_ from class `Container`, the _base_ of `Vector_container`. Alternatively, the subclass(Vector_container) and superclass(Container).
 
 since the derived class inherits members from its base class, it is commonly reffered to as _inheritance_.
 
 consider this function:
-
+```cpp
     void use(Container& c)
     {
         const int sz = c.size();
@@ -734,24 +842,28 @@ consider this function:
         for (int i=0; i!=sz; ++i)
             std::cout << c[i] << '\n';
     }
+```
 
 For a function like this to use a `Container` in complete ignorance of implementation details, some other function will have to make an object on which it can operate. For example:
-
+```cpp
     void g()
     {
         Vector_container vc(10);    // 10 elements
         use(vc);
     }
+```
 
 since `use()` doesn't know about `Vector_containers`, only `Containers`,  it will work just as well for a different implementation of a `Container` such as a `List_container`!
 
 > The main point here is that `use(Container&)` has no idea if its argument is a `Vector_container`, `List_container`, or any other kind of derived `Container`; **It doesn't need to know!**
 
+```cpp
     void h()
     {
         List_container lc = { 1,2,3,4,5,6,7,8,9 };  // List_container has different implementation
         use(lc);
     }
+```
 
 Pro: `use()` doesn't need to be recompiled if the implementation of `Vector_container` changes, or a new derived class is created.
 
@@ -762,6 +874,7 @@ Con: objects must be manipulated through pointers or references.
 
 Consider again the use of `Container`:
 
+```cpp
     void use(Container& c)
     {
         const int sz = c.size();
@@ -769,6 +882,7 @@ Consider again the use of `Container`:
         for (int i=0; i!=sz; ++i)
             std::cout << c[i] << '\n';
     }
+```
 
 when `h()` calls `use()`, `List_container`'s operator[] must be used, similarly when `g()` is called, `Vector_container`'s operator[] must be used. A `Container` Object must contain information to allow it to select the right function to call at run time. The usual implementation technique is for the compiler to convert the name of a vertual function into an index into a table of pointers to functions. That table is usually called the _virtual function table_ or simply `vtbl`. Each class with virtual functions has its own vtbl identifying its virtual function. 
 
