@@ -5,8 +5,11 @@
 // --------------------------------------
 
 #include <iostream>
-#include "gamecomponents.hpp"
+#include "game.hpp"
 
 int main(){
+    
     std::cout << "starting tic tac toe . . .\n";
+
+
 }
