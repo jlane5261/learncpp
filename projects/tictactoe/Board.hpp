@@ -12,10 +12,19 @@ private:
     int m_location;
 public:
     void set_location(const int& location);
-    void update_state(char& state);
+    void update_state(const char& state);
+    char get_state();
 };
 
 enum BoardLocation{
+
+/*
+Space Locations
+_1_|_2_|_3_
+_4_|_5_|_6_
+ 7 | 8 | 9 
+*/
+
     topLeft =       1,
     topCenter =     2,
     topRight =      3,
@@ -28,13 +37,6 @@ enum BoardLocation{
 };
 
 class Board
-/*
-
-Space Locations
-_1_|_2_|_3_
-_4_|_5_|_6_
- 7 | 8 | 9 
-*/
 {
 private:
     Space m_topLeft;
@@ -49,8 +51,8 @@ private:
 
 public:
     Board();
-    ~Board();
-    void update_space(char& location);
+    //~Board();
+    void update_space(const int& location, const char& state);
     bool check_board();
     void clear_board();
 };
