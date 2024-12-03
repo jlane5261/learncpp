@@ -120,3 +120,16 @@ bool Board::check_board()
     
     return false;
 }
+
+void Board::clear_board()
+{
+    m_topLeft.update_state(' ');
+    m_topCenter.update_state(' ');
+    m_topRight.update_state(' ');
+    m_middleLeft.update_state(' ');
+    m_middleCenter.update_state(' ');
+    m_middleRight.update_state(' ');
+    m_bottomLeft.update_state(' ');
+    m_bottomCenter.update_state(' ');
+    m_bottomRight.update_state(' ');
+}
